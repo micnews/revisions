@@ -132,6 +132,36 @@ test('multiple removes', function (t) {
   })
 })
 
+test('multiple ends with remove', function (t) {
+  var db = levelRevisions(level('end-with-remove'))
+    , key = 'hello'
+
+  db.add(key, { body: 'Hello', date: new Date(0) }, function (err) {
+    if (err) return t.end(err)
+
+    db.add(key, { body: 'Foo', date: new Date(1000) }, function (err) {
+      if (err) return t.end(err)
+
+      db.add(key, { body: '', date: new Date(2000) }, function (err) {
+        if (err) return t.end(err)
+
+        db.get(key, function (err, revisions) {
+          t.deepEqual(
+              revisions
+            , [
+                  { body: 'Hello', date: new Date(0) }
+                , { body: 'Foo', date: new Date(1000) }
+                , { body: '', date: new Date(2000) }
+              ]
+          )
+          t.end()
+        })
+      })
+    })
+  })
+
+})
+
 test('unchanged', function (t) {
   var db = levelRevisions(level('unchanged'))
     , key = 'hello'
