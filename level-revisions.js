@@ -19,7 +19,7 @@ var diff = require('diff')
         secondLast = revisions[revisions.length - 2]
         stats1 = diffStats(secondLast, last)
 
-        if (stats1.added && !stats1.removed) {
+        if (!stats1.removed) {
           revisions = revisions.slice(0, -2).concat([ last ])
         } else {
           break

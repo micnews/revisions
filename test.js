@@ -99,3 +99,24 @@ test('removing', function (t) {
     })
   })
 })
+
+test('unchanged', function (t) {
+  var db = levelRevisions(level('unchanged'))
+    , key = 'hello'
+
+  db.add(key, { body: 'Hello', date: new Date(0) }, function (err) {
+    if (err) return t.end(err)
+
+    db.add(key, { body: 'Hello', date: new Date(1000) }, function (err) {
+      if (err) return t.end(err)
+
+      db.get(key, function (err, revisions) {
+        if (err) return t.end(err)
+
+        t.deepEqual(revisions, [ { body: 'Hello', date: new Date(1000) } ])
+
+        t.end()
+      })
+    })
+  })
+})
