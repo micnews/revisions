@@ -21,6 +21,14 @@ var diff = require('diff')
 
         if (!stats1.removed) {
           revisions = revisions.slice(0, -2).concat([ last ])
+        } else if (revisions.length > 2) {
+          thirdLast = revisions[revisions.length - 3]
+          stats2 = diffStats(thirdLast, secondLast)
+          // if both the last revision and the revision before are removes
+          // merge them together
+          if (!stats1.added && !stats2.added) {
+            revisions = revisions.slice(0, -2).concat([ last ])
+          }
         } else {
           break
         }

@@ -87,6 +87,8 @@ test('removing', function (t) {
       if (err) return t.end(err)
 
       db.get(key, function (err, revisions) {
+        if (err) return t.end(err)
+
         t.deepEqual(
             revisions
           , [
@@ -95,6 +97,36 @@ test('removing', function (t) {
             ]
         )
         t.end()
+      })
+    })
+  })
+})
+
+test('multiple removes', function (t) {
+  var db = levelRevisions(level('multiple-removes'))
+    , key = 'hello'
+
+  db.add(key, { body: 'Hello, world!', date: new Date(0) }, function (err) {
+    if (err) return t.end(err)
+
+    db.add(key, { body: 'Hello, world', date: new Date(1000) }, function (err) {
+      if (err) return t.end(err)
+
+      db.add(key, { body: 'Hello', date: new Date(2000) }, function (err) {
+        if (err) return t.end(err)
+
+        db.get(key, function (err, revisions) {
+          if (err) return t.end(err)
+
+          t.deepEqual(
+              revisions
+            , [
+                  { body: 'Hello, world!', date: new Date(0) }
+                , { body: 'Hello', date: new Date(2000) }
+              ]
+          )
+          t.end()
+        })
       })
     })
   })
