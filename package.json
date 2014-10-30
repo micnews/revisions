@@ -1,0 +1,15 @@
+{
+  "name": "level-revisions",
+  "version": "0.0.0",
+  "description": "Put revisions, ordered by timestamp, in a leveldb-instance",
+  "main": "level-revisions.js",
+  "scripts": {
+    "test": "tape test.js"
+  },
+  "author": "David Björklund <david.bjorklund@gmail.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "level-test": "^1.6.6",
+    "tape": "^3.0.1"
+  }
+}
