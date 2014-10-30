@@ -11,5 +11,8 @@
   "devDependencies": {
     "level-test": "^1.6.6",
     "tape": "^3.0.1"
+  },
+  "dependencies": {
+    "diff": "^1.0.8"
   }
 }
