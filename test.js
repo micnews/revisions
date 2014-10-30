@@ -25,14 +25,14 @@ test('multiple compatible revisions', function (t) {
   db.add(key, { body: 'Hello', date: new Date(0) }, function (err) {
     if (err) return t.end(err)
 
-    db.add(key, { body: 'Hello, world', date: new Date(100) }, function (err) {
+    db.add(key, { body: 'Hello, world', date: new Date(1000) }, function (err) {
       if (err) return t.end(err)
 
-      db.add(key, { body: 'Hello, world!', date: new Date(200) }, function (err) {
+      db.add(key, { body: 'Hello, world!', date: new Date(2000) }, function (err) {
         if (err) return t.end(err)
 
         db.get(key, function (err, revisions) {
-          t.deepEqual(revisions, [ { body: 'Hello, world!', date: new Date(200) }])
+          t.deepEqual(revisions, [ { body: 'Hello, world!', date: new Date(2000) }])
           t.end()
         })
       })
@@ -47,7 +47,7 @@ test('more complex, but compatible revisions', function (t) {
   db.add(key, { body: 'Hello', date: new Date(0) }, function (err) {
     if (err) return t.end(err)
 
-    db.add(key, { body: 'world!', date: new Date(100) }, function (err) {
+    db.add(key, { body: 'world!', date: new Date(1000) }, function (err) {
       if (err) return t.end(err)
 
       db.get(key, function (err, revisions) {
@@ -57,17 +57,17 @@ test('more complex, but compatible revisions', function (t) {
             revisions
           , [
                 { body: 'Hello', date: new Date(0) }
-              , { body: 'world!', date: new Date(100) }
+              , { body: 'world!', date: new Date(1000) }
             ]
         )
 
-        db.add(key, { body: 'Hello, world!', date: new Date(200) }, function (err) {
+        db.add(key, { body: 'Hello, world!', date: new Date(2000) }, function (err) {
           if (err) return t.end(err)
 
           db.get(key, function (err, revisions) {
             if (err) return t.end(err)
 
-            t.deepEqual(revisions, [ { body: 'Hello, world!', date: new Date(200)}])
+            t.deepEqual(revisions, [ { body: 'Hello, world!', date: new Date(2000)}])
             t.end()
           })
         })
@@ -83,7 +83,7 @@ test('removing', function (t) {
   db.add(key, { body: 'Hello, world!', date: new Date(0) }, function (err) {
     if (err) return t.end(err)
 
-    db.add(key, { body: 'Hello', date: new Date(100) }, function (err) {
+    db.add(key, { body: 'Hello', date: new Date(1000) }, function (err) {
       if (err) return t.end(err)
 
       db.get(key, function (err, revisions) {
@@ -91,7 +91,7 @@ test('removing', function (t) {
             revisions
           , [
                 { body: 'Hello, world!', date: new Date(0) }
-              , { body: 'Hello', date: new Date(100) }
+              , { body: 'Hello', date: new Date(1000) }
             ]
         )
         t.end()
