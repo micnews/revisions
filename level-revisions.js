@@ -16,7 +16,11 @@ var DiffMatchPatch = require('diff-match-patch')
       return stats
     }
 
-  , trim = function (revisions) {
+    // merge together revisions if
+    // * it's not a delete - keep the last revision only
+    // * multiple deletes - if we have two deletes in a row we simplify it to
+    //    be one big delete
+  , merge = function (revisions) {
       var last, secondLast, thirdLast, stats1, stats2
 
       while(revisions.length >= 2) {
@@ -48,7 +52,7 @@ var DiffMatchPatch = require('diff-match-patch')
       get(db, key, function (err, revisions) {
         if (err && !err.notFound) return callback(err)
 
-        revisions = Array.isArray(revisions) ? trim(revisions.concat([data])) : [ data ]
+        revisions = Array.isArray(revisions) ? merge(revisions.concat([data])) : [ data ]
 
         db.put(key, revisions, { encoding: 'json' }, callback)
       })
