@@ -13,6 +13,6 @@
     "tape": "^3.0.1"
   },
   "dependencies": {
-    "diff": "^1.0.8"
+    "diff-match-patch": "^1.0.0"
   }
 }

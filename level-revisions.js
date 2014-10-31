@@ -1,12 +1,17 @@
-var diff = require('diff')
+var DiffMatchPatch = require('diff-match-patch')
+
+  , diffMatchPatch = new DiffMatchPatch()
 
   , diffStats = function (before, after) {
-      var stats = { added: 0, removed: 0 }
+      var stats = { added: false, removed: false }
+        , diff = diffMatchPatch.diff_main(before.body, after.body)
+        , index
 
-      diff.diffChars(before.body, after.body).forEach(function (change) {
-        if (change.added) stats.added = stats.added + 1
-        if (change.removed) stats.removed = stats.removed + 1
-      })
+      for(index = 0; index < diff.length; ++index) {
+        if (diff[index][0] === -1) stats.removed = true
+        if (diff[index][0] === 1) stats.added = true
+        if (stats.removed && stats.added) break
+      }
 
       return stats
     }
