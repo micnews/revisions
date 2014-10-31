@@ -159,7 +159,6 @@ test('multiple ends with remove', function (t) {
       })
     })
   })
-
 })
 
 test('unchanged', function (t) {
@@ -179,6 +178,23 @@ test('unchanged', function (t) {
 
         t.end()
       })
+    })
+  })
+})
+
+test('string date', function (t) {
+  var db = levelRevisions(level('string-date'))
+    , key = 'hello'
+
+  db.add(key, { body: 'Hello', date: (new Date(0)).toJSON() }, function (err) {
+    if (err) return t.end(err)
+
+    db.get(key, function (err, revisions) {
+      if (err) return t.end(err)
+
+      t.deepEqual(revisions, [ { body: 'Hello', date: new Date(0) } ])
+
+      t.end()
     })
   })
 })
