@@ -52,7 +52,8 @@ var DiffMatchPatch = require('diff-match-patch')
       rawGet(db, key, function (err, revisions) {
         if (err && !err.notFound) return callback(err)
 
-        revisions = Array.isArray(revisions) ? merge(revisions.concat([data])) : [ data ]
+        revisions = Array.isArray(revisions) ?
+          merge(revisions.concat([data])) : [ data ]
 
         db.put(key, revisions, { encoding: 'json' }, callback)
       })
@@ -67,7 +68,9 @@ var DiffMatchPatch = require('diff-match-patch')
         if (err) {
           callback(err)
         } else {
-          revisions.forEach(function (revision) { revision.date = new Date(revision.date)})
+          revisions.forEach(function (revision) {
+            revision.date = new Date(revision.date)
+          })
           callback(null, revisions)
         }
       })
