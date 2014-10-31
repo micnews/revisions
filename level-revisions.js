@@ -3,14 +3,14 @@ var DiffMatchPatch = require('diff-match-patch')
   , diffMatchPatch = new DiffMatchPatch()
 
   , diffStats = function (before, after) {
-      var stats = { added: false, removed: false }
+      var stats = { inserts: false, deletes: false }
         , diff = diffMatchPatch.diff_main(before.body, after.body)
         , index
 
       for(index = 0; index < diff.length; ++index) {
-        if (diff[index][0] === -1) stats.removed = true
-        if (diff[index][0] === 1) stats.added = true
-        if (stats.removed && stats.added) break
+        if (diff[index][0] === -1) stats.deletes = true
+        if (diff[index][0] === 1) stats.inserts = true
+        if (stats.deletes && stats.inserts) break
       }
 
       return stats
@@ -24,14 +24,14 @@ var DiffMatchPatch = require('diff-match-patch')
         secondLast = revisions[revisions.length - 2]
         stats1 = diffStats(secondLast, last)
 
-        if (!stats1.removed) {
+        if (!stats1.deletes) {
           revisions = revisions.slice(0, -2).concat([ last ])
-        } else if (!stats1.added && revisions.length > 2) {
+        } else if (!stats1.inserts && revisions.length > 2) {
           thirdLast = revisions[revisions.length - 3]
           stats2 = diffStats(thirdLast, secondLast)
           // if both the last revision and the revision before are removes
           // merge them together
-          if (!stats2.added) {
+          if (!stats2.inserts) {
             revisions = revisions.slice(0, -2).concat([ last ])
           } else {
             break
