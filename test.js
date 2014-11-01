@@ -18,6 +18,8 @@ test('one revision', function (t) {
   })
 })
 
+return
+
 test('multiple compatible revisions', function (t) {
   var db = levelRevisions(level('multiple-compatible'))
     , key = 'hello'

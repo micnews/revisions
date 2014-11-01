@@ -1,4 +1,5 @@
 var DiffMatchPatch = require('diff-match-patch')
+  , forkdb = require('forkdb')
 
   , diffMatchPatch = new DiffMatchPatch()
 
@@ -59,6 +60,12 @@ var DiffMatchPatch = require('diff-match-patch')
       })
     }
 
+  , add2 = function (fork, key, data, callback) {
+      var w = fork.createWriteStream({ key: key }, function (err) { callback(err) })
+      w.write(JSON.stringify(data))
+      w.end()
+    }
+
   , rawGet = function (db, key, callback) {
       db.get(key, { encoding: 'json' }, callback)
     }
@@ -76,13 +83,36 @@ var DiffMatchPatch = require('diff-match-patch')
       })
     }
 
-  , levelRevisions = function (db) {
+  , get2 = function (fork, key, callback) {
+      fork.tails(key, function (err, tails) {
+        var hash = tails[0].hash
+          , revisions = []
+        // TODO handle conflicts
+        var stream = fork.createReadStream(hash)
+
+        stream.on('data', function (chunk) {
+          var obj = JSON.parse(chunk)
+          obj.date = new Date(obj.date)
+          revisions.push(obj)
+        })
+
+        stream.once('end', function () {
+          callback(null, revisions)
+        })
+      })
+    }
+
+  , levelRevisions = function (db, dir) {
+      var fork = forkdb(db, { dir: dir })
+
       return {
           add: function (key, data, callback) {
-            add(db, key, data, callback)
+            // add(db, key, data, callback)
+            add2(fork, key, data, callback)
           }
         , get: function (key, callback) {
-            get(db, key, callback)
+            // get(db, key, callback)
+            get2(fork, key, callback)
           }
       }
     }
