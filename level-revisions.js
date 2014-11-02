@@ -1,7 +1,8 @@
-var DiffMatchPatch = require('diff-match-patch')
-  , forkdb = require('forkdb')
-  , after = require('after')
+var Writable = require('stream').Writable
 
+  , after = require('after')
+  , DiffMatchPatch = require('diff-match-patch')
+  , forkdb = require('forkdb')
   , diffMatchPatch = new DiffMatchPatch()
 
   , diffStats = function (before, after) {
@@ -51,18 +52,14 @@ var DiffMatchPatch = require('diff-match-patch')
     }
 
   , add = function (fork, key, data, callback) {
-      fork.heads(key, function (err, heads) {
-        if (err) return callback(err)
+      var date = typeof(data.date) === 'string' ? data.date : data.date.toJSON()
+        , meta = { key: [ key, date ] }
+        , w = fork.createWriteStream(meta, function (err) {
+            callback(err)
+          })
 
-        var meta = Array.isArray(heads) ?
-              { key: key, prev: heads } : { key: key }
-          , w = fork.createWriteStream(meta, function (err) {
-                  callback(err)
-                })
-
-        w.write(JSON.stringify(data))
-        w.end()
-      })
+      w.write(JSON.stringify(data))
+      w.end()
     }
 
   , read = function (fork, hash, callback) {
@@ -80,55 +77,43 @@ var DiffMatchPatch = require('diff-match-patch')
       stream.once('error', callback)
     }
 
-  , getHash = function (fork, hash, callback) {
-      var hashes = []
+  , getFromRevisionKey = function (fork, key, callback) {
+      fork.heads(key, function (err, metadata) {
+        if (err) return callback(err)
 
-        , stream = fork.history(hash)
+        var done = after(metadata.length, callback)
+          , revisions = Array(metadata.length)
 
-      stream.on('data', function (meta) {
-        hashes.push(meta.hash)
-      })
+        metadata.forEach(function (meta, index) {
+          read(fork, meta.hash, function (err, data) {
+            if (err) return done(err)
 
-      stream.once('end', function () {
-        var revisions = new Array(hashes.length)
-          , done = after(hashes.length, function (err) {
-              if (err) return callback(err)
-              callback(null, revisions)
-            })
-
-        hashes.forEach(function (hash, index) {
-          read(fork, hash, function (err, obj) {
-            revisions[index] = obj
-            done(err)
+            revisions[index] = data
+            done(null, revisions)
           })
         })
       })
     }
 
   , get = function (fork, key, callback) {
-      fork.heads(key, function (err, heads) {
-        if (err) return callback(err)
+      var keys = fork.keys({ gt: [ key, '0' ], lt: [ key, '3' ] })
+        , writable = new Writable({ objectMode: true})
+        , revisions = []
 
-        var done = after(heads.length, function (err) {
-              if (err) return callback(err)
-
-              allRevisions = allRevisions.sort(function (a, b) {
-                return (a.date - b.date) || ((a.body < b.body) ? -1 : 1)
-              })
-
-              callback(null, merge(allRevisions))
-            })
-          , allRevisions = []
-
-        heads.forEach(function (head) {
-          getHash(fork, head.hash, function (err, revisions) {
-            if (err) return done(err)
-
-            allRevisions = allRevisions.concat(revisions)
-            done()
-          })
-        })
+      writable.once('finish', function () {
+        callback(null, merge(revisions))
       })
+
+      writable._write = function (meta, _, done) {
+        getFromRevisionKey(fork, meta.key, function (err, array) {
+          if (err) return done(err)
+
+          revisions = revisions.concat(array)
+          done()
+        })
+      }
+
+      keys.pipe(writable)
     }
 
   , levelRevisions = function (db, dir) {

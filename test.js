@@ -201,8 +201,8 @@ test('string date', function (t) {
   })
 })
 
-test('conflicts with distinct dates', function (t) {
-  var db =levelRevisions(level('conflicts-distinct'))
+test('concurrent with distinct dates', function (t) {
+  var db =levelRevisions(level('concurrent-distinct'))
     , key = 'hello'
     , done = after(2, function () {
         db.get(key, function (err, revisions) {
@@ -221,18 +221,23 @@ test('conflicts with distinct dates', function (t) {
   db.add(key, { body: 'foo', date: new Date(0) }, done)
 })
 
-test('conflicts with same dates', function (t) {
-  var db =levelRevisions(level('conflicts-same'))
+test('concurrent with same dates', function (t) {
+  var db =levelRevisions(level('concurrent-same'))
     , key = 'hello'
     , done = after(2, function () {
         db.get(key, function (err, revisions) {
-          t.deepEqual(
-              revisions
-            , [
-                  { body: 'bar', date: new Date(0) }
-                , { body: 'foo', date: new Date(0) }
-              ]
-          )
+          var foo = false
+            , bar = false
+
+          revisions.forEach(function (revision) {
+            if (revision.body === 'foo') foo = true
+            if (revision.body === 'bar') bar = true
+          })
+
+          t.equal(foo, true, 'should include foo')
+          t.equal(bar, true, 'should include bar')
+          t.equal(revisions.length, 2)
+
           t.end()
         })
       })
