@@ -1,8 +1,7 @@
-var Writable = require('stream').Writable
-
-  , after = require('after')
+var after = require('after')
   , DiffMatchPatch = require('diff-match-patch')
   , forkdb = require('forkdb')
+
   , diffMatchPatch = new DiffMatchPatch()
 
   , diffStats = function (before, after) {
@@ -95,25 +94,46 @@ var Writable = require('stream').Writable
       })
     }
 
+  , flatten = function (array) {
+      return array.reduce(function (result, current) {
+        current.forEach(function (row) { result.push(row) })
+        return result
+      }, [])
+    }
+
   , get = function (fork, key, callback) {
       var keys = fork.keys({ gt: [ key, '0' ], lt: [ key, '3' ] })
-        , writable = new Writable({ objectMode: true})
-        , revisions = []
+        , results = []
+        , count = 0
+        , bailed = false
+        , ended = false
+        , index = 0
 
-      writable.once('finish', function () {
-        callback(null, merge(revisions))
+      keys.on('data', function (meta) {
+        var currentIndex = index
+        index++
+        count++
+        getFromRevisionKey(fork, meta.key, function (err, array) {
+          if (bailed) return
+          if (err) {
+            bailed = true
+            callback(err)
+            return
+          }
+          results[currentIndex] = array
+          count--
+          if (count === 0 && ended) {
+            callback(null, merge(flatten(results)))
+          }
+        })
       })
 
-      writable._write = function (meta, _, done) {
-        getFromRevisionKey(fork, meta.key, function (err, array) {
-          if (err) return done(err)
-
-          revisions = revisions.concat(array)
-          done()
-        })
-      }
-
-      keys.pipe(writable)
+      keys.once('end', function () { ended = true })
+      keys.once('err', function (err) {
+        if (bailed) return
+        bailed = true
+        callback(err)
+      })
     }
 
   , levelRevisions = function (db, dir) {
