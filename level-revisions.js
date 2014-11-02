@@ -1,6 +1,7 @@
 var after = require('after')
   , DiffMatchPatch = require('diff-match-patch')
   , forkdb = require('forkdb')
+  , streamToJSON = require('stream-to-json')
 
   , diffMatchPatch = new DiffMatchPatch()
 
@@ -21,12 +22,14 @@ var after = require('after')
     // * it's not a delete - keep the last revision only
     // * multiple deletes - if we have two deletes in a row we simplify it to
     //    be one big delete
+    // this works by moving them from the @input array to the @results array
+    //    but only moving those that aren't being merged
   , merge = function (revisions) {
       if (revisions.length < 2) return revisions.slice(0)
 
       var input = revisions.slice()
         , results = [ input.pop() ]
-        , last, resultLast, stats, stats2
+        , stats
         , deleting = false
 
       while(input.length > 0) {
@@ -43,7 +46,7 @@ var after = require('after')
           if (input.length === 1) {
             results.unshift(input.pop())
           } else {
-            var stats = diffStats(input[input.length - 2], input[input.length - 1])
+            stats = diffStats(input[input.length - 2], input[input.length - 1])
             if (!stats.inserts) {
               deleting = true
               input.pop()
@@ -73,18 +76,12 @@ var after = require('after')
     }
 
   , read = function (fork, hash, callback) {
-      var chunks = []
-        , stream = fork.createReadStream(hash)
+      streamToJSON(fork.createReadStream(hash), function (err, obj) {
+        if (err) return callback(err)
 
-      stream.on('data', function (chunk) { chunks.push(chunk) })
-      stream.once('end', function () {
-
-        var obj = JSON.parse(Buffer.concat(chunks).toString())
         obj.date = new Date(obj.date)
-
         callback(null, obj)
       })
-      stream.once('error', callback)
     }
 
   , getFromRevisionKey = function (fork, key, callback) {

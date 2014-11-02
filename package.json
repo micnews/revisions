@@ -16,6 +16,7 @@
   "dependencies": {
     "after": "^0.8.1",
     "diff-match-patch": "^1.0.0",
-    "forkdb": "^6.1.1"
+    "forkdb": "^6.1.1",
+    "stream-to-json": "0.0.1"
   }
 }

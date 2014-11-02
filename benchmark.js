@@ -22,7 +22,7 @@ db.add('key', { body: input1, date: new Date(100) }, function () {
 
         function _write(index) {
           var input = index % 2 === 0 ? input3 : input4
-          if (index === 500) return running = false
+          if (index === 500) return
 
           db.add('key3', { body: input, date: new Date(index) }, function () {
             write(index + 1)
