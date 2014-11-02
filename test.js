@@ -3,280 +3,154 @@ var after = require('after')
   , test = require('tape')
 
   , levelRevisions = require('./level-revisions')
+  , runTest = function (name, inputs, callback) {
+
+      var db = levelRevisions((level(name)))
+        , key = 'hello'
+        , done = after(inputs.length, function (err) {
+            if (err) return callback(err)
+
+            db.get(key, callback)
+          })
+      inputs.forEach(function (row) {
+        db.add(key, row, done)
+      })
+    }
 
 test('get() none existing', function (t) {
-  var db = levelRevisions(level('none-existing'))
-    , key = 'hello'
-
-  db.get(key, function (err, revisions) {
-    if (err) return t.end(err)
+  runTest('empty', [], function (err, revisions) {
     t.deepEqual(revisions, [])
-    t.end()
+    t.end(err)
   })
 })
 
 test('one revision', function (t) {
-  var db = levelRevisions(level('one-revision'))
-    , key = 'hello'
+  var inputs = [ { body: 'Hello, world', date: new Date(0) } ]
 
-  db.add(key, { body: 'Hello, world', date: new Date(0) }, function (err) {
-    if (err) return t.end(err)
-
-    db.get(key, function (err, revisions) {
-      if (err) return t.end(err)
-
-      t.deepEqual(revisions, [ { body: 'Hello, world', date: new Date(0) } ])
-      t.end()
-    })
+  runTest('one-revision', inputs, function (err, revisions) {
+    t.deepEqual(revisions, inputs)
+    t.end(err)
   })
 })
 
 test('multiple compatible revisions', function (t) {
-  var db = levelRevisions(level('multiple-compatible'))
-    , key = 'hello'
+  var inputs = [
+          { body: 'Hello', date: new Date(0) }
+        , { body: 'Hello, world', date: new Date(1000) }
+        , { body: 'Hello, world!', date: new Date(2000) }
+      ]
 
-  db.add(key, { body: 'Hello', date: new Date(0) }, function (err) {
-    if (err) return t.end(err)
-
-    db.add(key, { body: 'Hello, world', date: new Date(1000) }, function (err) {
-      if (err) return t.end(err)
-
-      db.add(key, { body: 'Hello, world!', date: new Date(2000) }, function (err) {
-        if (err) return t.end(err)
-
-        db.get(key, function (err, revisions) {
-          t.deepEqual(revisions, [ { body: 'Hello, world!', date: new Date(2000) }])
-          t.end()
-        })
-      })
-    })
+  runTest('multiple-compatible', inputs, function (err, revisions) {
+    t.deepEqual(revisions, [ inputs[2] ])
+    t.end(err)
   })
 })
 
 test('more complex, but compatible revisions', function (t) {
-  var db = levelRevisions(level('multiple-compatible-complex'))
-    , key = 'hello'
+  var inputs = [
+          { body: 'Hello', date: new Date(0) }
+        , { body: 'world!', date: new Date(1000) }
+        , { body: 'Hello, world!', date: new Date(2000)}
+      ]
 
-  db.add(key, { body: 'Hello', date: new Date(0) }, function (err) {
-    if (err) return t.end(err)
-
-    db.add(key, { body: 'world!', date: new Date(1000) }, function (err) {
-      if (err) return t.end(err)
-
-      db.get(key, function (err, revisions) {
-        if (err) return t.end(err)
-
-        t.deepEqual(
-            revisions
-          , [
-                { body: 'Hello', date: new Date(0) }
-              , { body: 'world!', date: new Date(1000) }
-            ]
-        )
-
-        db.add(key, { body: 'Hello, world!', date: new Date(2000) }, function (err) {
-          if (err) return t.end(err)
-
-          db.get(key, function (err, revisions) {
-            if (err) return t.end(err)
-
-            t.deepEqual(revisions, [ { body: 'Hello, world!', date: new Date(2000)}])
-            t.end()
-          })
-        })
-      })
-    })
+  runTest('multiple-compatible-complex', inputs, function (err, revisions) {
+    t.deepEqual(revisions, [ inputs[2] ])
+    t.end(err)
   })
 })
 
 test('removing', function (t) {
-  var db = levelRevisions(level('removing'))
-    , key = 'hello'
+  var inputs = [
+          { body: 'Hello, world!', date: new Date(0) }
+        , { body: 'Hello', date: new Date(1000) }
+      ]
 
-  db.add(key, { body: 'Hello, world!', date: new Date(0) }, function (err) {
-    if (err) return t.end(err)
-
-    db.add(key, { body: 'Hello', date: new Date(1000) }, function (err) {
-      if (err) return t.end(err)
-
-      db.get(key, function (err, revisions) {
-        if (err) return t.end(err)
-
-        t.deepEqual(
-            revisions
-          , [
-                { body: 'Hello, world!', date: new Date(0) }
-              , { body: 'Hello', date: new Date(1000) }
-            ]
-        )
-        t.end()
-      })
-    })
+  runTest('removing', inputs, function (err, revisions) {
+    t.deepEqual(revisions, inputs)
+    t.end(err)
   })
 })
 
 test('multiple removes', function (t) {
-  var db = levelRevisions(level('multiple-removes'))
-    , key = 'hello'
+  var inputs = [
+          { body: 'Hello, world!', date: new Date(0) }
+        , { body: 'Hello, world', date: new Date(1000) }
+        , { body: 'Hello', date: new Date(2000) }
+      ]
 
-  db.add(key, { body: 'Hello, world!', date: new Date(0) }, function (err) {
-    if (err) return t.end(err)
-
-    db.add(key, { body: 'Hello, world', date: new Date(1000) }, function (err) {
-      if (err) return t.end(err)
-
-      db.add(key, { body: 'Hello', date: new Date(2000) }, function (err) {
-        if (err) return t.end(err)
-
-        db.get(key, function (err, revisions) {
-          if (err) return t.end(err)
-
-          t.deepEqual(
-              revisions
-            , [
-                  { body: 'Hello, world!', date: new Date(0) }
-                , { body: 'Hello', date: new Date(2000) }
-              ]
-          )
-          t.end()
-        })
-      })
-    })
+  runTest('multiple-removes', inputs, function (err, revisions) {
+    t.deepEqual(revisions, [ inputs[0], inputs[2] ])
+    t.end(err)
   })
 })
 
 test('multiple ends with remove', function (t) {
-  var db = levelRevisions(level('end-with-remove'))
-    , key = 'hello'
+  var inputs = [
+          { body: 'Hello', date: new Date(0) }
+        , { body: 'Foo', date: new Date(1000) }
+        , { body: '', date: new Date(2000) }
+      ]
 
-  db.add(key, { body: 'Hello', date: new Date(0) }, function (err) {
-    if (err) return t.end(err)
-
-    db.add(key, { body: 'Foo', date: new Date(1000) }, function (err) {
-      if (err) return t.end(err)
-
-      db.add(key, { body: '', date: new Date(2000) }, function (err) {
-        if (err) return t.end(err)
-
-        db.get(key, function (err, revisions) {
-          t.deepEqual(
-              revisions
-            , [
-                  { body: 'Hello', date: new Date(0) }
-                , { body: 'Foo', date: new Date(1000) }
-                , { body: '', date: new Date(2000) }
-              ]
-          )
-          t.end()
-        })
-      })
-    })
+  runTest('end-with-remove', inputs, function (err, revisions) {
+    t.deepEqual(revisions, inputs)
+    t.end(err)
   })
 })
 
 test('unchanged', function (t) {
-  var db = levelRevisions(level('unchanged'))
-    , key = 'hello'
+  var inputs = [
+          { body: 'Hello', date: new Date(0) }
+        , { body: 'Hello', date: new Date(1000) }
+      ]
 
-  db.add(key, { body: 'Hello', date: new Date(0) }, function (err) {
-    if (err) return t.end(err)
-
-    db.add(key, { body: 'Hello', date: new Date(1000) }, function (err) {
-      if (err) return t.end(err)
-
-      db.get(key, function (err, revisions) {
-        if (err) return t.end(err)
-
-        t.deepEqual(revisions, [ { body: 'Hello', date: new Date(1000) } ])
-
-        t.end()
-      })
-    })
+  runTest('unchanged', inputs, function (err, revisions) {
+    t.deepEqual(revisions, [ inputs[1] ])
+    t.end(err)
   })
 })
 
 test('string date', function (t) {
-  var db = levelRevisions(level('string-date'))
-    , key = 'hello'
+  var inputs = [ { body: 'Hello', date: (new Date(0)).toJSON() } ]
 
-  db.add(key, { body: 'Hello', date: (new Date(0)).toJSON() }, function (err) {
-    if (err) return t.end(err)
-
-    db.get(key, function (err, revisions) {
-      if (err) return t.end(err)
-
-      t.deepEqual(revisions, [ { body: 'Hello', date: new Date(0) } ])
-
-      t.end()
-    })
+  runTest('string-date', inputs, function (err, revisions) {
+    t.deepEqual(revisions, [ { body: 'Hello', date: new Date(0) } ])
+    t.end(err)
   })
 })
 
 test('lots of revisions', function (t) {
-  var db = levelRevisions(level('lots-of-revisions'))
-    , key = 'hello'
-    , inputs = [
+  var inputs = [
           { body: 'Hello', date: new Date(0) }
         , { body: 'Hello', date: new Date(1000)}
         , { body: 'Hello, world!', date: new Date(2000) }
         , { body: 'foo', date: new Date(3000) }
         , { body: 'foobar', date: new Date(4000) }
       ]
-    , done = after(inputs.length, function (err) {
-        if (err) return t.end(err)
 
-        db.get(key, function (err, revisions) {
-          t.deepEqual(revisions, [ inputs[2], inputs[4] ])
-          t.end()
-        })
-      })
-
-  inputs.forEach(function (row) {
-    db.add(key, row, done)
+  runTest('lots-of-revisions', inputs, function (err, revisions) {
+    t.deepEqual(revisions, [ inputs[2], inputs[4] ])
+    t.end(err)
   })
 })
 
-test('concurrent with distinct dates', function (t) {
-  var db =levelRevisions(level('concurrent-distinct'))
-    , key = 'hello'
-    , done = after(2, function () {
-        db.get(key, function (err, revisions) {
-          t.deepEqual(
-              revisions
-            , [
-                  { body: 'foo', date: new Date(0) }
-                , { body: 'bar', date: new Date(1) }
-              ]
-          )
-          t.end()
-        })
-      })
+test('multiple same date', function (t) {
+  var inputs = [
+          { body: 'foo', date: new Date(0) }
+        , { body: 'bar', date: new Date(0) }
+      ]
 
-  db.add(key, { body: 'bar', date: new Date(1) }, done)
-  db.add(key, { body: 'foo', date: new Date(0) }, done)
-})
+  runTest('same-date', inputs, function (err, revisions) {
+    var foo = false
+      , bar = false
 
-test('concurrent with same dates', function (t) {
-  var db =levelRevisions(level('concurrent-same'))
-    , key = 'hello'
-    , done = after(2, function () {
-        db.get(key, function (err, revisions) {
-          var foo = false
-            , bar = false
+    revisions.forEach(function (revision) {
+      if (revision.body === 'foo') foo = true
+      if (revision.body === 'bar') bar = true
+    })
 
-          revisions.forEach(function (revision) {
-            if (revision.body === 'foo') foo = true
-            if (revision.body === 'bar') bar = true
-          })
-
-          t.equal(foo, true, 'should include foo')
-          t.equal(bar, true, 'should include bar')
-          t.equal(revisions.length, 2)
-
-          t.end()
-        })
-      })
-
-  db.add(key, { body: 'foo', date: new Date(0) }, done)
-  db.add(key, { body: 'bar', date: new Date(0) }, done)
+    t.equal(foo, true, 'should include foo')
+    t.equal(bar, true, 'should include bar')
+    t.equal(revisions.length, 2)
+    t.end(err)
+  })
 })
