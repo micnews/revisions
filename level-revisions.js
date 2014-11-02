@@ -1,6 +1,6 @@
 var DiffMatchPatch = require('diff-match-patch')
   , forkdb = require('forkdb')
-  , parallel = require('run-parallel')
+  , after = require('after')
 
   , diffMatchPatch = new DiffMatchPatch()
 
@@ -94,15 +94,17 @@ var DiffMatchPatch = require('diff-match-patch')
         })
 
         stream.once('end', function () {
-          var tasks = hashes.map(function (hash) {
-            return function (done) {
-              read(fork, hash, done)
-            }
-          })
-          parallel(tasks, function (err, revisions) {
-            if (err) return callback(err)
+          var revisions = new Array(hashes.length)
+            , done = after(hashes.length, function (err) {
+                if (err) return callback(err)
+                callback(null, merge(revisions.reverse()))
+              })
 
-            callback(null, merge(revisions.reverse()))
+          hashes.forEach(function (hash, index) {
+            read(fork, hash, function (err, obj) {
+              revisions[index] = obj
+              done(err)
+            })
           })
         })
       })

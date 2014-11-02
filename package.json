@@ -14,8 +14,8 @@
     "tape": "^3.0.1"
   },
   "dependencies": {
+    "after": "^0.8.1",
     "diff-match-patch": "^1.0.0",
-    "forkdb": "^6.1.1",
-    "run-parallel": "^1.0.0"
+    "forkdb": "^6.1.1"
   }
 }
