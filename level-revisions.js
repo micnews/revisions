@@ -80,31 +80,52 @@ var DiffMatchPatch = require('diff-match-patch')
       stream.once('error', callback)
     }
 
+  , getHash = function (fork, hash, callback) {
+      var hashes = []
+
+        , stream = fork.history(hash)
+
+      stream.on('data', function (meta) {
+        hashes.push(meta.hash)
+      })
+
+      stream.once('end', function () {
+        var revisions = new Array(hashes.length)
+          , done = after(hashes.length, function (err) {
+              if (err) return callback(err)
+              callback(null, revisions)
+            })
+
+        hashes.forEach(function (hash, index) {
+          read(fork, hash, function (err, obj) {
+            revisions[index] = obj
+            done(err)
+          })
+        })
+      })
+    }
+
   , get = function (fork, key, callback) {
       fork.heads(key, function (err, heads) {
+        if (err) return callback(err)
 
-        var hash = heads[0].hash
-          , hashes = []
-          , index = 0
+        var done = after(heads.length, function (err) {
+              if (err) return callback(err)
 
-          , stream = fork.history(hash)
-
-        stream.on('data', function (meta) {
-          hashes.push(meta.hash)
-        })
-
-        stream.once('end', function () {
-          var revisions = new Array(hashes.length)
-            , done = after(hashes.length, function (err) {
-                if (err) return callback(err)
-                callback(null, merge(revisions.reverse()))
+              allRevisions = allRevisions.sort(function (a, b) {
+                return a.date - b.date
               })
 
-          hashes.forEach(function (hash, index) {
-            read(fork, hash, function (err, obj) {
-              revisions[index] = obj
-              done(err)
+              callback(null, merge(allRevisions))
             })
+          , allRevisions = []
+
+        heads.forEach(function (head) {
+          getHash(fork, head.hash, function (err, revisions) {
+            if (err) return done(err)
+
+            allRevisions = allRevisions.concat(revisions)
+            done()
           })
         })
       })

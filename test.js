@@ -1,5 +1,7 @@
-var test = require('tape')
+var after = require('after')
   , level = require('level-test')()
+  , test = require('tape')
+
   , levelRevisions = require('./level-revisions')
 
 test('one revision', function (t) {
@@ -197,4 +199,24 @@ test('string date', function (t) {
       t.end()
     })
   })
+})
+
+test('conflicts with distinct dates', function (t) {
+  var db =levelRevisions(level('conflicts'))
+    , key = 'hello'
+    , done = after(2, function () {
+        db.get(key, function (err, revisions) {
+          t.deepEqual(
+              revisions
+            , [
+                  { body: 'foo', date: new Date(0) }
+                , { body: 'bar', date: new Date(1) }
+              ]
+          )
+          t.end()
+        })
+      })
+
+  db.add(key, { body: 'bar', date: new Date(1) }, done)
+  db.add(key, { body: 'foo', date: new Date(0) }, done)
 })
