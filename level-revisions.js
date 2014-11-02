@@ -14,7 +14,6 @@ var after = require('after')
         if (diff[index][0] === 1) stats.inserts = true
         if (stats.deletes && stats.inserts) break
       }
-
       return stats
     }
 
@@ -23,31 +22,43 @@ var after = require('after')
     // * multiple deletes - if we have two deletes in a row we simplify it to
     //    be one big delete
   , merge = function (revisions) {
-      var last, secondLast, thirdLast, stats1, stats2
+      if (revisions.length < 2) return revisions.slice(0)
 
-      while(revisions.length >= 2) {
-        last = revisions[revisions.length - 1]
-        secondLast = revisions[revisions.length - 2]
-        stats1 = diffStats(secondLast, last)
+      var input = revisions.slice()
+        , results = [ input.pop() ]
+        , last, resultLast, stats, stats2
+        , deleting = false
 
-        if (!stats1.deletes) {
-          revisions = revisions.slice(0, -2).concat([ last ])
-        } else if (!stats1.inserts && revisions.length > 2) {
-          thirdLast = revisions[revisions.length - 3]
-          stats2 = diffStats(thirdLast, secondLast)
-          // if both the last revision and the revision before are removes
-          // merge them together
-          if (!stats2.inserts) {
-            revisions = revisions.slice(0, -2).concat([ last ])
+      while(input.length > 0) {
+        stats = diffStats(input[input.length - 1], results[0])
+
+        if (!stats.deletes) {
+          if (deleting) {
+            results.unshift(input.pop())
           } else {
-            break
+            input.pop()
+          }
+          deleting = false
+        } else if (!stats.inserts) {
+          if (input.length === 1) {
+            results.unshift(input.pop())
+          } else {
+            var stats = diffStats(input[input.length - 2], input[input.length - 1])
+            if (!stats.inserts) {
+              deleting = true
+              input.pop()
+            } else {
+              deleting = false
+              results.unshift(input.pop())
+            }
           }
         } else {
-          break
+          deleting = false
+          results.unshift(input.pop())
         }
       }
 
-      return revisions
+      return results
     }
 
   , add = function (fork, key, data, callback) {

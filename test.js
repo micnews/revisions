@@ -212,6 +212,30 @@ test('string date', function (t) {
   })
 })
 
+test('lots of revisions', function (t) {
+  var db = levelRevisions(level('lots-of-revisions'))
+    , key = 'hello'
+    , inputs = [
+          { body: 'Hello', date: new Date(0) }
+        , { body: 'Hello', date: new Date(1000)}
+        , { body: 'Hello, world!', date: new Date(2000) }
+        , { body: 'foo', date: new Date(3000) }
+        , { body: 'foobar', date: new Date(4000) }
+      ]
+    , done = after(inputs.length, function (err) {
+        if (err) return t.end(err)
+
+        db.get(key, function (err, revisions) {
+          t.deepEqual(revisions, [ inputs[2], inputs[4] ])
+          t.end()
+        })
+      })
+
+  inputs.forEach(function (row) {
+    db.add(key, row, done)
+  })
+})
+
 test('concurrent with distinct dates', function (t) {
   var db =levelRevisions(level('concurrent-distinct'))
     , key = 'hello'
