@@ -20,22 +20,27 @@ db.add('key', { body: input1, date: new Date(100) }, function () {
         console.log('saving loads of revisions')
         var start = Date.now()
 
-        function write(index) {
-          if (index % 100 === 0 && index > 0) {
-            console.log('%s: %s ms', index, (Date.now() - start))
-          }
-          if (index === 500) {
-            levelDb.get('key3', function (err, data) {
-              console.log('uncompressed size:' + data.length / 1024 + 'kb')
-            })
-            return
-          }
-
+        function _write(index) {
           var input = index % 2 === 0 ? input3 : input4
+          if (index === 500) return running = false
 
           db.add('key3', { body: input, date: new Date(index) }, function () {
             write(index + 1)
           })
+        }
+
+        function write(index) {
+          if (index % 100 === 0 && index > 0) {
+            console.log('%s: %s ms', index, (Date.now() - start))
+            console.time('get')
+            db.get('key3', function () {
+              console.timeEnd('get')
+              start = Date.now()
+              _write(index)
+            })
+          } else {
+            _write(index)
+          }
         }
 
         write(0)
