@@ -113,7 +113,7 @@ var DiffMatchPatch = require('diff-match-patch')
               if (err) return callback(err)
 
               allRevisions = allRevisions.sort(function (a, b) {
-                return a.date - b.date
+                return (a.date - b.date) || ((a.body < b.body) ? -1 : 1)
               })
 
               callback(null, merge(allRevisions))
