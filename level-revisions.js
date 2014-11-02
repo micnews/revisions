@@ -1,5 +1,6 @@
 var DiffMatchPatch = require('diff-match-patch')
   , forkdb = require('forkdb')
+  , parallel = require('run-parallel')
 
   , diffMatchPatch = new DiffMatchPatch()
 
@@ -49,55 +50,60 @@ var DiffMatchPatch = require('diff-match-patch')
       return revisions
     }
 
-  , add = function (db, key, data, callback) {
-      rawGet(db, key, function (err, revisions) {
-        if (err && !err.notFound) return callback(err)
+  , add = function (fork, key, data, callback) {
+      fork.heads(key, function (err, heads) {
+        if (err) return callback(err)
 
-        revisions = Array.isArray(revisions) ?
-          merge(revisions.concat([data])) : [ data ]
+        var meta = Array.isArray(heads) ?
+              { key: key, prev: heads } : { key: key }
+          , w = fork.createWriteStream(meta, function (err) {
+                  callback(err)
+                })
 
-        db.put(key, revisions, { encoding: 'json' }, callback)
+        w.write(JSON.stringify(data))
+        w.end()
       })
     }
 
-  , add2 = function (fork, key, data, callback) {
-      var w = fork.createWriteStream({ key: key }, function (err) { callback(err) })
-      w.write(JSON.stringify(data))
-      w.end()
-    }
+  , read = function (fork, hash, callback) {
+      var chunks = []
+        , stream = fork.createReadStream(hash)
 
-  , rawGet = function (db, key, callback) {
-      db.get(key, { encoding: 'json' }, callback)
-    }
+      stream.on('data', function (chunk) { chunks.push(chunk) })
+      stream.once('end', function () {
 
-  , get = function (db, key, callback) {
-      rawGet(db, key, function (err, revisions) {
-        if (err) {
-          callback(err)
-        } else {
-          revisions.forEach(function (revision) {
-            revision.date = new Date(revision.date)
-          })
-          callback(null, revisions)
-        }
+        var obj = JSON.parse(Buffer.concat(chunks).toString())
+        obj.date = new Date(obj.date)
+
+        callback(null, obj)
       })
+      stream.once('error', callback)
     }
 
-  , get2 = function (fork, key, callback) {
-      fork.tails(key, function (err, tails) {
-        var hash = tails[0].hash
-          , revisions = []
-        // TODO handle conflicts
-        var stream = fork.createReadStream(hash)
+  , get = function (fork, key, callback) {
+      fork.heads(key, function (err, heads) {
 
-        stream.on('data', function (chunk) {
-          var obj = JSON.parse(chunk)
-          obj.date = new Date(obj.date)
-          revisions.push(obj)
+        var hash = heads[0].hash
+          , hashes = []
+          , index = 0
+
+          , stream = fork.history(hash)
+
+        stream.on('data', function (meta) {
+          hashes.push(meta.hash)
         })
 
         stream.once('end', function () {
-          callback(null, revisions)
+          var tasks = hashes.map(function (hash) {
+            return function (done) {
+              read(fork, hash, done)
+            }
+          })
+          parallel(tasks, function (err, revisions) {
+            if (err) return callback(err)
+
+            callback(null, merge(revisions))
+          })
         })
       })
     }
@@ -107,12 +113,10 @@ var DiffMatchPatch = require('diff-match-patch')
 
       return {
           add: function (key, data, callback) {
-            // add(db, key, data, callback)
-            add2(fork, key, data, callback)
+            add(fork, key, data, callback)
           }
         , get: function (key, callback) {
-            // get(db, key, callback)
-            get2(fork, key, callback)
+            get(fork, key, callback)
           }
       }
     }
