@@ -108,6 +108,17 @@ var after = require('after')
         , bailed = false
         , ended = false
         , index = 0
+        , maybeFinish = function () {
+            if (bailed) return
+            if (count === 0 && ended) {
+              callback(null, merge(flatten(results)))
+            }
+          }
+        , onError = function (err) {
+            if (bailed) return
+            bailed = true
+            callback(err)
+          }
 
       keys.on('data', function (meta) {
         var currentIndex = index
@@ -115,25 +126,19 @@ var after = require('after')
         count++
         getFromRevisionKey(fork, meta.key, function (err, array) {
           if (bailed) return
-          if (err) {
-            bailed = true
-            callback(err)
-            return
-          }
+          if (err) return onError(err)
+
           results[currentIndex] = array
           count--
-          if (count === 0 && ended) {
-            callback(null, merge(flatten(results)))
-          }
+          maybeFinish()
         })
       })
 
-      keys.once('end', function () { ended = true })
-      keys.once('err', function (err) {
-        if (bailed) return
-        bailed = true
-        callback(err)
+      keys.once('end', function () {
+        ended = true
+        maybeFinish()
       })
+      keys.once('err', onError)
     }
 
   , levelRevisions = function (db, dir) {

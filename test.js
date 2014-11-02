@@ -4,6 +4,17 @@ var after = require('after')
 
   , levelRevisions = require('./level-revisions')
 
+test('get() none existing', function (t) {
+  var db = levelRevisions(level('none-existing'))
+    , key = 'hello'
+
+  db.get(key, function (err, revisions) {
+    if (err) return t.end(err)
+    t.deepEqual(revisions, [])
+    t.end()
+  })
+})
+
 test('one revision', function (t) {
   var db = levelRevisions(level('one-revision'))
     , key = 'hello'
