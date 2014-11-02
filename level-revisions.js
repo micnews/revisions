@@ -102,7 +102,7 @@ var DiffMatchPatch = require('diff-match-patch')
           parallel(tasks, function (err, revisions) {
             if (err) return callback(err)
 
-            callback(null, merge(revisions))
+            callback(null, merge(revisions.reverse()))
           })
         })
       })
