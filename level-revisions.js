@@ -1,68 +1,8 @@
 var after = require('after')
-  , DiffMatchPatch = require('diff-match-patch')
   , forkdb = require('forkdb')
   , streamToJSON = require('stream-to-json')
 
-  , diffMatchPatch = new DiffMatchPatch()
-
-  , diffStats = function (before, after) {
-      var stats = { inserts: false, deletes: false }
-        , diff = diffMatchPatch.diff_main(before.body, after.body)
-        , index
-
-      for(index = 0; index < diff.length; ++index) {
-        if (diff[index][0] === -1) stats.deletes = true
-        if (diff[index][0] === 1) stats.inserts = true
-        if (stats.deletes && stats.inserts) break
-      }
-      return stats
-    }
-
-    // merge together revisions if
-    // * it's not a delete - keep the last revision only
-    // * multiple deletes - if we have two deletes in a row we simplify it to
-    //    be one big delete
-    // this works by moving them from the @input array to the @results array
-    //    but only moving those that aren't being merged
-  , merge = function (revisions) {
-      if (revisions.length < 2) return revisions.slice(0)
-
-      var input = revisions.slice()
-        , results = [ input.pop() ]
-        , stats
-        , deleting = false
-
-      while(input.length > 0) {
-        stats = diffStats(input[input.length - 1], results[0])
-
-        if (!stats.deletes) {
-          if (deleting) {
-            results.unshift(input.pop())
-          } else {
-            input.pop()
-          }
-          deleting = false
-        } else if (!stats.inserts) {
-          if (input.length === 1) {
-            results.unshift(input.pop())
-          } else {
-            stats = diffStats(input[input.length - 2], input[input.length - 1])
-            if (!stats.inserts) {
-              deleting = true
-              input.pop()
-            } else {
-              deleting = false
-              results.unshift(input.pop())
-            }
-          }
-        } else {
-          deleting = false
-          results.unshift(input.pop())
-        }
-      }
-
-      return results
-    }
+  , merge = require('./lib/merge')
 
   , add = function (fork, key, data, callback) {
       var date = typeof(data.date) === 'string' ? data.date : data.date.toJSON()
@@ -149,8 +89,8 @@ var after = require('after')
       keys.once('err', onError)
     }
 
-  , levelRevisions = function (db, dir) {
-      var fork = forkdb(db, { dir: dir })
+  , levelRevisions = function (db, options) {
+      var fork = forkdb(db, options)
 
       return {
           add: function (key, data, callback) {

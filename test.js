@@ -71,15 +71,30 @@ test('removing', function (t) {
   })
 })
 
-test('multiple removes', function (t) {
+test('multiple deletes', function (t) {
   var inputs = [
           { body: 'Hello, world!', date: new Date(0) }
         , { body: 'Hello, world', date: new Date(1000) }
         , { body: 'Hello', date: new Date(2000) }
       ]
 
-  runTest('multiple-removes', inputs, function (err, revisions) {
+  runTest('multiple-deletes', inputs, function (err, revisions) {
     t.deepEqual(revisions, [ inputs[0], inputs[2] ])
+    t.end(err)
+  })
+})
+
+test('deletes & inserts', function (t) {
+  var inputs = [
+          { body: 'beep boop', date: new Date(0)}
+        , { body: 'Hello, world!', date: new Date(1000) }
+        , { body: 'Hello, world', date: new Date(2000) }
+        , { body: 'Hello', date: new Date(3000) }
+        , { body: 'Hello2', date: new Date(4000)}
+      ]
+
+  runTest('deletes-inserts', inputs, function (err, revisions) {
+    t.deepEqual(revisions, [ inputs[0], inputs[1], inputs[4] ])
     t.end(err)
   })
 })
