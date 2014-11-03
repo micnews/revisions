@@ -4,10 +4,10 @@ var after = require('after')
 
   , merge = require('./lib/merge')
 
-  , add = function (fork, key, data, callback) {
+  , add = function (db, key, data, callback) {
       var date = typeof(data.date) === 'string' ? data.date : data.date.toJSON()
         , meta = { key: [ key, date ] }
-        , w = fork.createWriteStream(meta, function (err) {
+        , w = db.createWriteStream(meta, function (err) {
             callback(err)
           })
 
@@ -15,8 +15,8 @@ var after = require('after')
       w.end()
     }
 
-  , read = function (fork, hash, callback) {
-      streamToJSON(fork.createReadStream(hash), function (err, obj) {
+  , read = function (db, hash, callback) {
+      streamToJSON(db.createReadStream(hash), function (err, obj) {
         if (err) return callback(err)
 
         obj.date = new Date(obj.date)
@@ -24,15 +24,15 @@ var after = require('after')
       })
     }
 
-  , getFromRevisionKey = function (fork, key, callback) {
-      fork.heads(key, function (err, metadata) {
+  , getFromRevisionKey = function (db, key, callback) {
+      db.heads(key, function (err, metadata) {
         if (err) return callback(err)
 
         var done = after(metadata.length, callback)
           , revisions = Array(metadata.length)
 
         metadata.forEach(function (meta, index) {
-          read(fork, meta.hash, function (err, data) {
+          read(db, meta.hash, function (err, data) {
             if (err) return done(err)
 
             revisions[index] = data
@@ -49,8 +49,8 @@ var after = require('after')
       }, [])
     }
 
-  , get = function (fork, key, callback) {
-      var keys = fork.keys({ gt: [ key, '0' ], lt: [ key, '3' ] })
+  , get = function (db, key, callback) {
+      var keys = db.keys({ gt: [ key, '0' ], lt: [ key, '3' ] })
         , results = []
         , count = 0
         , bailed = false
@@ -72,7 +72,7 @@ var after = require('after')
         var currentIndex = index
         index++
         count++
-        getFromRevisionKey(fork, meta.key, function (err, array) {
+        getFromRevisionKey(db, meta.key, function (err, array) {
           if (bailed) return
           if (err) return onError(err)
 
@@ -89,15 +89,13 @@ var after = require('after')
       keys.once('err', onError)
     }
 
-  , levelRevisions = function (db, options) {
-      var fork = forkdb(db, options)
-
+  , levelRevisions = function (db) {
       return {
           add: function (key, data, callback) {
-            add(fork, key, data, callback)
+            add(db, key, data, callback)
           }
         , get: function (key, callback) {
-            get(fork, key, callback)
+            get(db, key, callback)
           }
       }
     }
