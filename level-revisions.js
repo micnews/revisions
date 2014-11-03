@@ -5,7 +5,7 @@ var after = require('after')
   , merge = require('./lib/merge')
 
   , add = function (db, key, data, callback) {
-      var date = typeof(data.date) === 'string' ? data.date : data.date.toJSON()
+      var date = new Date(data.date)
         , meta = { key: [ key, date ] }
         , w = db.createWriteStream(meta, function (err) {
             callback(err)
@@ -50,7 +50,7 @@ var after = require('after')
     }
 
   , get = function (db, key, callback) {
-      var keys = db.keys({ gt: [ key, '0' ], lt: [ key, '3' ] })
+      var keys = db.keys({ gt: [ key, null ], lt: [ key, undefined ] })
         , results = []
         , count = 0
         , bailed = false
