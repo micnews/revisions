@@ -99,7 +99,7 @@ var after = require('after')
       })
     }
 
-  , levelRevisions = function (db) {
+  , revisions = function (db) {
       return {
           add: function (key, data, callback) {
             add(db, key, data, callback)
@@ -116,4 +116,4 @@ var after = require('after')
       }
     }
 
-module.exports = levelRevisions
+module.exports = revisions
