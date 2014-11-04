@@ -4,7 +4,7 @@
   "description": "Save revisions, ordered by timestamp.",
   "main": "revisions.js",
   "scripts": {
-    "test": "tape test.js"
+    "test": "tape test/*-test.js"
   },
   "author": "David Björklund <david.bjorklund@gmail.com>",
   "license": "MIT",

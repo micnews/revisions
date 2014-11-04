@@ -1,22 +1,6 @@
-var after = require('after')
-  , forkdb = require('forkdb')
-  , level = require('level-test')()
-  , test = require('tape')
+var test = require('tape')
 
-  , runTest = function (name, inputs, callback) {
-
-      var db = require('./revisions')(forkdb(level(name)))
-        , key = 'hello'
-        , done = after(inputs.length, function (err) {
-            if (err) return callback(err)
-
-            db.get(key, callback)
-          })
-
-      inputs.forEach(function (row) {
-        db.add(key, row, done)
-      })
-    }
+  , runTest = require('./common').runGetTest
 
 test('get() none existing', function (t) {
   runTest('empty', [], function (err, revisions) {
@@ -25,7 +9,7 @@ test('get() none existing', function (t) {
   })
 })
 
-test('one revision', function (t) {
+test('get() one revision', function (t) {
   var inputs = [ { body: 'Hello, world', date: new Date(0) } ]
 
   runTest('one-revision', inputs, function (err, revisions) {
@@ -34,7 +18,7 @@ test('one revision', function (t) {
   })
 })
 
-test('multiple compatible revisions', function (t) {
+test('get() multiple compatible revisions', function (t) {
   var inputs = [
           { body: 'Hello', date: new Date(0) }
         , { body: 'Hello, world', date: new Date(1000) }
@@ -47,7 +31,7 @@ test('multiple compatible revisions', function (t) {
   })
 })
 
-test('more complex, but compatible revisions', function (t) {
+test('get() more complex, but compatible revisions', function (t) {
   var inputs = [
           { body: 'Hello', date: new Date(0) }
         , { body: 'world!', date: new Date(1000) }
@@ -60,7 +44,7 @@ test('more complex, but compatible revisions', function (t) {
   })
 })
 
-test('removing', function (t) {
+test('get() removing', function (t) {
   var inputs = [
           { body: 'Hello, world!', date: new Date(0) }
         , { body: 'Hello', date: new Date(1000) }
@@ -72,7 +56,7 @@ test('removing', function (t) {
   })
 })
 
-test('multiple deletes', function (t) {
+test('get() multiple deletes', function (t) {
   var inputs = [
           { body: 'Hello, world!', date: new Date(0) }
         , { body: 'Hello, world', date: new Date(1000) }
@@ -85,7 +69,7 @@ test('multiple deletes', function (t) {
   })
 })
 
-test('deletes & inserts', function (t) {
+test('get() deletes & inserts', function (t) {
   var inputs = [
           { body: 'beep boop', date: new Date(0)}
         , { body: 'Hello, world!', date: new Date(1000) }
@@ -100,7 +84,7 @@ test('deletes & inserts', function (t) {
   })
 })
 
-test('multiple ends with remove', function (t) {
+test('get() multiple ends with remove', function (t) {
   var inputs = [
           { body: 'Hello', date: new Date(0) }
         , { body: 'Foo', date: new Date(1000) }
@@ -113,7 +97,7 @@ test('multiple ends with remove', function (t) {
   })
 })
 
-test('unchanged', function (t) {
+test('get() unchanged', function (t) {
   var inputs = [
           { body: 'Hello', date: new Date(0) }
         , { body: 'Hello', date: new Date(1000) }
@@ -125,7 +109,7 @@ test('unchanged', function (t) {
   })
 })
 
-test('string date', function (t) {
+test('get() string date', function (t) {
   var inputs = [ { body: 'Hello', date: (new Date(0)).toJSON() } ]
 
   runTest('string-date', inputs, function (err, revisions) {
@@ -134,7 +118,7 @@ test('string date', function (t) {
   })
 })
 
-test('lots of revisions', function (t) {
+test('get() lots of revisions', function (t) {
   var inputs = [
           { body: 'Hello', date: new Date(0) }
         , { body: 'Hello', date: new Date(1000)}
@@ -149,7 +133,7 @@ test('lots of revisions', function (t) {
   })
 })
 
-test('multiple same date', function (t) {
+test('get() multiple same date', function (t) {
   var inputs = [
           { body: 'foo', date: new Date(0) }
         , { body: 'bar', date: new Date(0) }
