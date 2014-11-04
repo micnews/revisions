@@ -3,10 +3,9 @@ var after = require('after')
   , level = require('level-test')()
   , test = require('tape')
 
-  , levelRevisions = require('./level-revisions')
   , runTest = function (name, inputs, callback) {
 
-      var db = levelRevisions(forkdb(level(name)))
+      var db = require('./revisions')(forkdb(level(name)))
         , key = 'hello'
         , done = after(inputs.length, function (err) {
             if (err) return callback(err)

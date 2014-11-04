@@ -1,5 +1,5 @@
-var levelDb = require('level-test')()('benchmark')
-  , db = require('./level-revisions')(levelDb)
+var fork = require('forkdb')(require('level-test')()('benchmark'))
+  , db = require('./revisions')(fork)
   , join = Array.prototype.join
 
   , input1 = join.call(Array(100), 'abc')

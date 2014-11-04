@@ -1,4 +1,4 @@
-# level-revisions
+# revisions
 
 Put revisions, ordered by timestamp, in a leveldb-instance. Only significant revisions are included.
 
@@ -6,14 +6,14 @@ Significant means that if we update the body twice, but both of them is addition
 
 For more details on how this is handled, take a look at the tests.
 
-[![NPM](https://nodei.co/npm/level-revisions.png?downloads&stars)](https://nodei.co/npm/level-revisions/)
+[![NPM](https://nodei.co/npm/revisions.png?downloads&stars)](https://nodei.co/npm/revisions/)
 
-[![NPM](https://nodei.co/npm-dl/level-revisions.png)](https://nodei.co/npm/level-revisions/)
+[![NPM](https://nodei.co/npm-dl/revisions.png)](https://nodei.co/npm/revisions/)
 
 ## Installation
 
 ```
-npm install level-revisions
+npm install revisions
 ```
 
 ## Example
@@ -21,7 +21,8 @@ npm install level-revisions
 ### Input
 
 ```javascript
-var db = require('./level-revisions')(require('level-test')()('example'))
+var forkdb = require('forkdb')
+  , db = require('./revisions')(forkdb(require('level-test')()('example')))
   , key = 'key'
 
 db.add(key, { body: 'Hello', date: new Date(0) }, function () {

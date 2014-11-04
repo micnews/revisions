@@ -1,8 +1,8 @@
 {
-  "name": "level-revisions",
+  "name": "revisions",
   "version": "1.0.0",
-  "description": "Put revisions, ordered by timestamp, in a leveldb-instance. Only significant revisions are included",
-  "main": "level-revisions.js",
+  "description": "Save revisions, ordered by timestamp.",
+  "main": "revisions.js",
   "scripts": {
     "test": "tape test.js"
   },

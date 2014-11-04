@@ -1,4 +1,4 @@
-var db = require('./level-revisions')(require('level-test')()('example'))
+var db = require('./revisions')(require('forkdb')(require('level-test')()('example')))
   , key = 'key'
 
 db.add(key, { body: 'Hello', date: new Date(0) }, function () {
