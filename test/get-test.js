@@ -1,6 +1,7 @@
 var test = require('tape')
 
-  , runTest = require('./common').runGetTest
+  , common = require('./common')
+  , runTest = common.runGetTest
 
 test('get() none existing', function (t) {
   runTest('empty', [], function (err, revisions) {
@@ -152,5 +153,24 @@ test('get() multiple same date', function (t) {
     t.equal(bar, true, 'should include bar')
     t.equal(revisions.length, 2)
     t.end(err)
+  })
+})
+
+test('get() can return stream', function (t) {
+    var inputs = [
+          { body: 'Hello', date: new Date(0) }
+        , { body: 'Hello, world', date: new Date(1000) }
+      ]
+
+  common.populate('get-stream', inputs, function (err, db) {
+    var stream = db.get(common.key)
+
+    t.notOk(stream.writable, 'stream should not be writable')
+    t.notOk(stream.write, 'stream should not have a write method')
+
+    stream.once('data', function (obj) {
+      t.deepEqual(obj, inputs[1])
+      stream.once('end', t.end.bind(t))
+    })
   })
 })
