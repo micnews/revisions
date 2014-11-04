@@ -76,7 +76,7 @@ db.add(key, { body: 'Hello', date: new Date(0) }, function () {
     date: Thu Jan 01 1970 01:00:02 GMT+0100 (CET) } ]
 ```
 
-## Licence
+## License
 
 Copyright (c) 2014 Mic Network, Inc
 
