@@ -49,7 +49,7 @@ var after = require('after')
       }, [])
     }
 
-  , get = function (db, key, callback) {
+  , getAll = function (db, key, callback) {
       var keys = db.keys({ gt: [ key, null ], lt: [ key, undefined ] })
         , results = []
         , count = 0
@@ -59,7 +59,7 @@ var after = require('after')
         , maybeFinish = function () {
             if (bailed) return
             if (count === 0 && ended) {
-              callback(null, merge(flatten(results)))
+              callback(null, flatten(results))
             }
           }
         , onError = function (err) {
@@ -89,13 +89,29 @@ var after = require('after')
       keys.once('err', onError)
     }
 
+  , getSignificant = function (db, key, callback) {
+      getAll(db, key, function (err, results) {
+        if (err) {
+          callback(err)
+        } else {
+          callback(null, merge(results))
+        }
+      })
+    }
+
   , levelRevisions = function (db) {
       return {
           add: function (key, data, callback) {
             add(db, key, data, callback)
           }
-        , get: function (key, callback) {
-            get(db, key, callback)
+        , get: function (key, options, callback) {
+            if (!callback) {
+              getSignificant(db, key, options)
+            } else if (!options || !options.all) {
+              getSignificant(db, key, callback)
+            } else {
+              getAll(db, key, callback)
+            }
           }
       }
     }

@@ -23,8 +23,10 @@ npm install revisions
 ### Input
 
 ```javascript
-var forkdb = require('forkdb')
-  , db = require('./revisions')(forkdb(require('level-test')()('example')))
+// argument is an instance of forkdb, so you can for example use the replication from fork
+var fork = require('forkdb')(require('level-test')()('example'))
+
+  , db = require('./revisions')(fork)
   , key = 'key'
 
 db.add(key, { body: 'Hello', date: new Date(0) }, function () {
@@ -41,6 +43,10 @@ db.add(key, { body: 'Hello', date: new Date(0) }, function () {
           db.get(key, function (err, revisions) {
             console.log('3. This however will be two revisions, since the data has significantly changed')
             console.log(revisions)
+            db.get(key, { all: true }, function (err, revisions) {
+              console.log('4. You can also get all revisions')
+              console.log(revisions)
+            })
           })
         })
       })
@@ -59,6 +65,12 @@ db.add(key, { body: 'Hello', date: new Date(0) }, function () {
     date: Thu Jan 01 1970 01:00:01 GMT+0100 (CET) } ]
 3. This however will be two revisions, since the data has significantly changed
 [ { body: 'Hello, world!',
+    date: Thu Jan 01 1970 01:00:01 GMT+0100 (CET) },
+  { body: 'foobar',
+    date: Thu Jan 01 1970 01:00:02 GMT+0100 (CET) } ]
+4. You can also get all revisions
+[ { body: 'Hello', date: Thu Jan 01 1970 01:00:00 GMT+0100 (CET) },
+  { body: 'Hello, world!',
     date: Thu Jan 01 1970 01:00:01 GMT+0100 (CET) },
   { body: 'foobar',
     date: Thu Jan 01 1970 01:00:02 GMT+0100 (CET) } ]

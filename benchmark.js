@@ -35,8 +35,12 @@ db.add('key', { body: input1, date: new Date(100) }, function () {
             console.time('get')
             db.get('key3', function () {
               console.timeEnd('get')
-              start = Date.now()
-              _write(index)
+              console.time('get all')
+              db.get('key3', { all: true }, function () {
+                console.timeEnd('get all')
+                start = Date.now()
+                _write(index)
+              })
             })
           } else {
             _write(index)
