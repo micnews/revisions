@@ -12,13 +12,15 @@ var createAdd = require('./lib/add')
             add(key, data, callback)
           }
         , get: function (key, options, callback) {
-            if (!callback) {
-              getSignificant(key, options)
-            } else if (!options || !options.all) {
-              getSignificant(key, callback)
-            } else {
-              getAll(key, callback)
+            if (typeof(options) === 'function') {
+              return getSignificant(key, options)
             }
+
+            if (options && options.all) {
+              return getAll(key, callback)
+            }
+
+            return getSignificant(key, callback)
           }
       }
     }
