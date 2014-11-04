@@ -1,18 +1,22 @@
 {
-  "name": "level-revisions",
+  "name": "revisions",
   "version": "1.0.0",
-  "description": "Put revisions, ordered by timestamp, in a leveldb-instance. Only significant revisions are included",
-  "main": "level-revisions.js",
+  "description": "Save revisions, ordered by timestamp.",
+  "main": "revisions.js",
   "scripts": {
-    "test": "tape test.js"
+    "test": "tape test/*-test.js"
   },
   "author": "David Björklund <david.bjorklund@gmail.com>",
   "license": "MIT",
   "devDependencies": {
+    "forkdb": "^6.1.1",
     "level-test": "^1.6.6",
+    "rimraf": "^2.2.8",
     "tape": "^3.0.1"
   },
   "dependencies": {
-    "diff-match-patch": "^1.0.0"
+    "after": "^0.8.1",
+    "diff-match-patch": "^1.0.0",
+    "stream-to-json": "0.0.1"
   }
 }

@@ -1,19 +1,21 @@
-# level-revisions
+# revisions
 
-Put revisions, ordered by timestamp, in a leveldb-instance. Only significant revisions are included.
+Put revisions, ordered by timestamp.
 
-Significant means that if we update the body twice, but both of them is additions the revisions will be merged to one revision. Deletes are handled in a similar way.
+__revisions__ wraps [forkdb](https://github.com/substack/forkdb), so all revisions are saved (even if they're not shown).
+
+When reading revisions, only significant revisions are included. Significant means that if we update the body twice, but both of them are additions the revisions will be merged to one revision. Deletes are handled in a similar way.
 
 For more details on how this is handled, take a look at the tests.
 
-[![NPM](https://nodei.co/npm/level-revisions.png?downloads&stars)](https://nodei.co/npm/level-revisions/)
+[![NPM](https://nodei.co/npm/revisions.png?downloads&stars)](https://nodei.co/npm/revisions/)
 
-[![NPM](https://nodei.co/npm-dl/level-revisions.png)](https://nodei.co/npm/level-revisions/)
+[![NPM](https://nodei.co/npm-dl/revisions.png)](https://nodei.co/npm/revisions/)
 
 ## Installation
 
 ```
-npm install level-revisions
+npm install revisions
 ```
 
 ## Example
@@ -21,7 +23,10 @@ npm install level-revisions
 ### Input
 
 ```javascript
-var db = require('./level-revisions')(require('level-test')()('example'))
+// argument is an instance of forkdb, so you can for example use the replication from fork
+var fork = require('forkdb')(require('level-test')()('example'))
+
+  , db = require('./revisions')(fork)
   , key = 'key'
 
 db.add(key, { body: 'Hello', date: new Date(0) }, function () {
@@ -38,6 +43,10 @@ db.add(key, { body: 'Hello', date: new Date(0) }, function () {
           db.get(key, function (err, revisions) {
             console.log('3. This however will be two revisions, since the data has significantly changed')
             console.log(revisions)
+            db.get(key, { all: true }, function (err, revisions) {
+              console.log('4. You can also get all revisions')
+              console.log(revisions)
+            })
           })
         })
       })
@@ -56,6 +65,12 @@ db.add(key, { body: 'Hello', date: new Date(0) }, function () {
     date: Thu Jan 01 1970 01:00:01 GMT+0100 (CET) } ]
 3. This however will be two revisions, since the data has significantly changed
 [ { body: 'Hello, world!',
+    date: Thu Jan 01 1970 01:00:01 GMT+0100 (CET) },
+  { body: 'foobar',
+    date: Thu Jan 01 1970 01:00:02 GMT+0100 (CET) } ]
+4. You can also get all revisions
+[ { body: 'Hello', date: Thu Jan 01 1970 01:00:00 GMT+0100 (CET) },
+  { body: 'Hello, world!',
     date: Thu Jan 01 1970 01:00:01 GMT+0100 (CET) },
   { body: 'foobar',
     date: Thu Jan 01 1970 01:00:02 GMT+0100 (CET) } ]
