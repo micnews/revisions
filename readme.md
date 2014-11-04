@@ -1,8 +1,10 @@
 # revisions
 
-Put revisions, ordered by timestamp, in a leveldb-instance. Only significant revisions are included.
+Put revisions, ordered by timestamp.
 
-Significant means that if we update the body twice, but both of them is additions the revisions will be merged to one revision. Deletes are handled in a similar way.
+__revisions__ wraps [forkdb](https://github.com/substack/forkdb), so all revisions are saved (even if they're not shown).
+
+When reading revisions, only significant revisions are included. Significant means that if we update the body twice, but both of them are additions the revisions will be merged to one revision. Deletes are handled in a similar way.
 
 For more details on how this is handled, take a look at the tests.
 
