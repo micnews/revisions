@@ -16,8 +16,11 @@
   },
   "dependencies": {
     "after": "^0.8.1",
-    "diff-match-patch": "^1.0.0",
-    "stream-to-json": "0.0.1"
+    "concat-stream": "^1.4.6",
+    "read-only-stream": "^1.1.1",
+    "significant-stream": "^1.0.0",
+    "stream-to-json": "0.0.1",
+    "through2": "^0.6.3"
   },
   "directories": {
     "test": "test"

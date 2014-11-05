@@ -30,6 +30,7 @@ var fork = require('forkdb')(require('level-test')()('example'))
   , key = 'key'
 
 db.add(key, { body: 'Hello', date: new Date(0) }, function () {
+  // db.get(key) will return a stream that returns significant changes
   db.get(key, function (err, revisions) {
     console.log('1. This adds a revision')
     console.log(revisions)
@@ -43,6 +44,7 @@ db.add(key, { body: 'Hello', date: new Date(0) }, function () {
           db.get(key, function (err, revisions) {
             console.log('3. This however will be two revisions, since the data has significantly changed')
             console.log(revisions)
+            // db.get(key, { all: true }) will return a stream that returns all changes
             db.get(key, { all: true }, function (err, revisions) {
               console.log('4. You can also get all revisions')
               console.log(revisions)
