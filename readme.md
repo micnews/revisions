@@ -1,4 +1,4 @@
-# revisions
+# revisions[![build status](https://secure.travis-ci.org/micnews/revisions.svg)](http://travis-ci.org/micnews/revisions)
 
 Put revisions, ordered by timestamp.
 
