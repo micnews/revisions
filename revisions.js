@@ -1,10 +1,8 @@
 var createAdd = require('./lib/add')
-  , createGetAll = require('./lib/get-all')
-  , createGetSignificant = require('./lib/get-significant')
+  , createGet = require('./lib/get')
 
   , revisions = function (db) {
-      var getAll = createGetAll(db)
-        , getSignificant = createGetSignificant(db, getAll)
+      var get = createGet(db)
         , add = createAdd(db)
 
       return {
@@ -12,15 +10,7 @@ var createAdd = require('./lib/add')
             add(key, data, callback)
           }
         , get: function (key, options, callback) {
-            if (typeof(options) === 'function') {
-              return getSignificant(key, options)
-            }
-
-            if (options && options.all) {
-              return getAll(key, callback)
-            }
-
-            return getSignificant(key, callback)
+            return get(key, options, callback)
           }
       }
     }

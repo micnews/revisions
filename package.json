@@ -16,7 +16,8 @@
   },
   "dependencies": {
     "after": "^0.8.1",
-    "concat-stream": "^1.4.6",
+    "collect-stream": "^1.0.0",
+    "multipipe": "^0.1.2",
     "read-only-stream": "^1.1.1",
     "significant-stream": "^1.0.0",
     "stream-to-json": "0.0.1",
